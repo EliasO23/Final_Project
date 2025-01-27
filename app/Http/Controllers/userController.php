@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class userController extends Controller
 {
@@ -185,6 +186,37 @@ class userController extends Controller
             'daily_stats' => $dailyStats,
             'weekly_stats' => $weeklyStats,
             'monthly_stats' => $monthlyStats,
+        ], 200);
+    }
+
+    public function login(Request $request)
+    {
+        // Obtener credenciales
+        $credentials = $request->only('email', 'password');
+
+        // Verificar credenciales
+        $user = User::where('email', $credentials['email'])->first();
+        if (!$user) {
+            return response()->json([
+                'message' => 'Invalid credentials',
+            ], 401);
+        }
+
+        // Verificar password
+        if(!password_verify($credentials['password'], $user->password)) {
+            return response()->json([
+                'message' => 'Invalid credentials',
+            ], 401);
+        }
+
+        // Generar token
+        $token = JWTAuth::fromUser($user);
+
+        
+        return response()->json([
+            'message' => 'Login success',
+            'data' => $user,
+            'token' => $token
         ], 200);
     }
 }
