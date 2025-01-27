@@ -18,6 +18,7 @@ class AdminMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         try {
+            //Verificar si el usuario es administrador
             $user = JWTAuth::parseToken()->authenticate();
             if ($user->role != 'admin') {
                 return response()->json(['message' => 'Unauthorized'], 401);

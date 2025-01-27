@@ -59,6 +59,12 @@ class userController extends Controller
     {
         $user = User::find($id);
 
+        if (!$user) {
+            return response()->json([
+                'message' => 'User not found'
+            ], 404);
+        }
+
         return response()->json([
             'message' => 'Get data by id',
             'data' => $user
@@ -174,7 +180,7 @@ class userController extends Controller
             $endMonth = $startMonth->copy()->endOfMonth(); // Fin del mes correspondiente
 
             return [
-                'month' => $startMonth->format('F Y'), // Nombre del mes y año (ej. "Enero 2025")
+                'month' => $startMonth->format('F Y'), // Nombre del mes y año
                 'count' => User::whereBetween('created_at', [$startMonth, $endMonth])->count(),
             ];
         });
@@ -189,6 +195,9 @@ class userController extends Controller
         ], 200);
     }
 
+    /**
+     * Login a user
+     */
     public function login(Request $request)
     {
         // Obtener credenciales

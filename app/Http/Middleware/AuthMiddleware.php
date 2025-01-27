@@ -18,6 +18,7 @@ class AuthMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         try {
+            //Verificar si el usuario está autenticado
             $user = JWTAuth::parseToken()->authenticate();
         } 
         catch (Exception $e) {
