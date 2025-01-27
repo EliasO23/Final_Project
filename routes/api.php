@@ -9,3 +9,4 @@ use App\Http\Controllers\userController;
 // })->middleware('auth:sanctum');
 
 Route::apiResource('users', userController::class);
+Route::get('stats', [userController::class, 'stats']);

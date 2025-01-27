@@ -31,7 +31,7 @@ class userController extends Controller
         ]);
 
         $use = User::where('email', $request->email)->first();
-        if($use) {
+        if ($use) {
             return response()->json([
                 'message' => 'Email already registered'
             ], 400);
@@ -77,7 +77,7 @@ class userController extends Controller
 
         $user = User::find($id);
 
-        if(!$user) {
+        if (!$user) {
             return response()->json([
                 'message' => 'User not found'
             ], 404);
@@ -101,7 +101,7 @@ class userController extends Controller
     {
         $user = User::find($id);
 
-        if(!$user) {
+        if (!$user) {
             return response()->json([
                 'message' => 'User not found'
             ], 404);
@@ -113,6 +113,78 @@ class userController extends Controller
         return response()->json([
             'message' => 'Delete data',
             'data' => $user
+        ], 200);
+    }
+
+    /**
+     * Get the statistics of the users
+     */
+    public function stats()
+    {
+        // Usuarios por cada hora del día actual
+        $startOfDay = now()->startOfDay();
+        $currentHour = now()->hour;
+
+        $hourlyStats = collect(range(0, $currentHour))->map(function ($hour) use ($startOfDay) {
+            $startHour = $startOfDay->copy()->addHours($hour);
+            $endHour = $startHour->copy()->addHour();
+
+            return [
+                'hour' => $startHour->format('H:00'),
+                'count' => User::whereBetween('created_at', [$startHour, $endHour])->count(),
+            ];
+        });
+
+        // Usuarios por día en la última semana
+        $startOfWeek = now()->startOfDay()->subDays(6);
+        $dailyStats = collect(range(0, 6))->map(function ($day) use ($startOfWeek) {
+            $date = $startOfWeek->copy()->addDays($day);
+
+            return [
+                'date' => $date->format('l'),
+                'count' => User::whereDate('created_at', $date)->count(),
+            ];
+        });
+
+        // Usuarios por semana del mes actual
+        $currentDate = now(); // Fecha actual
+        $startOfWeek = $currentDate->copy()->startOfWeek(); // Inicio de la semana actual
+
+        // Generar estadísticas para las últimas 4 semanas
+        $weeklyStats = collect(range(0, 3))->map(function ($weekOffset) use ($startOfWeek) {
+            $startWeek = $startOfWeek->copy()->subWeeks($weekOffset); // Inicio de la semana
+            $endWeek = $startWeek->copy()->endOfWeek(); // Fin de la semana
+
+            return [
+                'week' => "Week " . ($weekOffset + 1), // Etiqueta de la semana
+                'count' => User::whereBetween('created_at', [$startWeek, $endWeek])->count(),
+            ];
+        });
+
+        $weeklyStats = $weeklyStats->reverse()->values();
+
+        // Usuarios por mes en los últimos 6 meses
+        $currentDate = now(); // Fecha actual
+        $startOfMonth = $currentDate->copy()->startOfMonth(); // Inicio del mes actual
+
+        // Generar estadísticas para los últimos 6 meses
+        $monthlyStats = collect(range(0, 4))->map(function ($monthOffset) use ($startOfMonth) {
+            $startMonth = $startOfMonth->copy()->subMonths($monthOffset); // Inicio del mes correspondiente
+            $endMonth = $startMonth->copy()->endOfMonth(); // Fin del mes correspondiente
+
+            return [
+                'month' => $startMonth->format('F Y'), // Nombre del mes y año (ej. "Enero 2025")
+                'count' => User::whereBetween('created_at', [$startMonth, $endMonth])->count(),
+            ];
+        });
+
+        $monthlyStats = $monthlyStats->reverse()->values();
+
+        return response()->json([
+            'hourly_stats' => $hourlyStats,
+            'daily_stats' => $dailyStats,
+            'weekly_stats' => $weeklyStats,
+            'monthly_stats' => $monthlyStats,
         ], 200);
     }
 }
